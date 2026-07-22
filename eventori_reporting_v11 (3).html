@@ -1,0 +1,668 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>EVENTORI — Reporting Paid Ads v11</title>
+<style>
+  :root {
+    --purple: #6C4DDC;
+    --mauve: #CBB5F6;
+    --yellow: #F5D65C;
+    --bg: #F8F7FF;
+    --text: #1A1A2E;
+    --gray: #6B7280;
+    --light: #F3F0FF;
+    --border: #E5E7EB;
+    --red: #EF4444;
+    --green: #10B981;
+    --orange: #F59E0B;
+    --card: #FFFFFF;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; background: var(--bg); color: var(--text); font-size: 14px; line-height: 1.5; }
+
+  .header { background: var(--purple); color: white; padding: 28px 40px; display: flex; align-items: center; justify-content: space-between; }
+  .header h1 { font-size: 22px; font-weight: 700; }
+  .header p { opacity: 0.8; font-size: 13px; margin-top: 4px; }
+  .header-badge { background: var(--yellow); color: var(--text); padding: 6px 14px; border-radius: 20px; font-weight: 700; font-size: 13px; }
+
+  .nav { background: white; border-bottom: 1px solid var(--border); padding: 0 40px; display: flex; gap: 4px; overflow-x: auto; }
+  .nav-tab { padding: 14px 18px; cursor: pointer; font-size: 13px; font-weight: 500; color: var(--gray); border-bottom: 2px solid transparent; white-space: nowrap; transition: all 0.2s; }
+  .nav-tab:hover { color: var(--purple); }
+  .nav-tab.active { color: var(--purple); border-bottom-color: var(--purple); font-weight: 600; }
+
+  .content { padding: 32px 40px; max-width: 1300px; margin: 0 auto; }
+  .tab-content { display: none; }
+  .tab-content.active { display: block; }
+
+  .section-title { font-size: 16px; font-weight: 700; margin-bottom: 16px; padding-bottom: 8px; border-bottom: 2px solid var(--mauve); }
+  .section-block { margin-bottom: 36px; }
+  .period-badge { background: var(--mauve); color: var(--purple); padding: 4px 10px; border-radius: 6px; font-size: 12px; font-weight: 600; display: inline-block; margin-bottom: 16px; }
+
+  .kpi-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 14px; margin-bottom: 24px; }
+  .kpi-card { background: var(--card); border-radius: 10px; padding: 16px; border: 1px solid var(--border); }
+  .kpi-card.alert { border-left: 3px solid var(--red); }
+  .kpi-card.good { border-left: 3px solid var(--green); }
+  .kpi-card.warn { border-left: 3px solid var(--orange); }
+  .kpi-label { font-size: 11px; color: var(--gray); font-weight: 500; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; }
+  .kpi-value { font-size: 22px; font-weight: 700; }
+  .kpi-delta { font-size: 11px; margin-top: 4px; font-weight: 600; }
+  .kpi-delta.up { color: var(--green); }
+  .kpi-delta.down { color: var(--red); }
+  .kpi-delta.neutral { color: var(--gray); }
+
+  .table-wrap { overflow-x: auto; border-radius: 10px; border: 1px solid var(--border); margin-bottom: 24px; }
+  table { width: 100%; border-collapse: collapse; background: white; }
+  th { background: var(--light); padding: 10px 14px; text-align: left; font-size: 11px; font-weight: 600; color: var(--gray); text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 1px solid var(--border); white-space: nowrap; }
+  td { padding: 10px 14px; border-bottom: 1px solid var(--border); font-size: 13px; }
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: var(--bg); }
+  .td-name { font-weight: 600; color: var(--purple); }
+  .badge { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 11px; font-weight: 600; }
+  .badge-green { background: #D1FAE5; color: #065F46; }
+  .badge-red { background: #FEE2E2; color: #991B1B; }
+  .badge-orange { background: #FEF3C7; color: #92400E; }
+  .badge-gray { background: #F3F4F6; color: #6B7280; }
+  .badge-purple { background: var(--light); color: var(--purple); }
+  .badge-blue { background: #DBEAFE; color: #1E40AF; }
+
+  .alert-box { border-radius: 10px; padding: 14px 18px; margin-bottom: 14px; display: flex; gap: 12px; align-items: flex-start; }
+  .alert-box.red { background: #FEF2F2; border: 1px solid #FECACA; }
+  .alert-box.orange { background: #FFFBEB; border: 1px solid #FDE68A; }
+  .alert-box.green { background: #F0FDF4; border: 1px solid #BBF7D0; }
+  .alert-box.blue { background: #EFF6FF; border: 1px solid #BFDBFE; }
+  .alert-icon { font-size: 16px; flex-shrink: 0; }
+  .alert-title { font-weight: 700; font-size: 13px; margin-bottom: 3px; }
+  .alert-text { font-size: 12px; color: var(--gray); line-height: 1.5; }
+
+  .reco-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 16px; }
+  .reco-card { background: white; border-radius: 10px; border: 1px solid var(--border); padding: 18px; }
+  .reco-header { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+  .reco-prio { width: 26px; height: 26px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; color: white; flex-shrink: 0; }
+  .prio-1 { background: var(--red); }
+  .prio-2 { background: var(--orange); }
+  .prio-3 { background: var(--green); }
+  .reco-title { font-weight: 700; font-size: 13px; }
+  .reco-channel { font-size: 11px; color: var(--gray); margin-bottom: 8px; }
+  .reco-action { font-size: 12px; color: var(--text); line-height: 1.6; }
+
+  .channel-header { display: flex; align-items: center; gap: 12px; margin-bottom: 20px; background: white; border-radius: 10px; border: 1px solid var(--border); padding: 16px 20px; }
+  .channel-icon { width: 40px; height: 40px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 18px; }
+  .channel-icon.li { background: #0A66C2; }
+  .channel-icon.ga { background: #FBBC04; }
+  .channel-icon.meta { background: #1877F2; }
+  .channel-name { font-size: 16px; font-weight: 700; }
+  .channel-sub { font-size: 12px; color: var(--gray); }
+  .channel-budget { margin-left: auto; text-align: right; }
+  .channel-budget-val { font-size: 18px; font-weight: 700; color: var(--purple); }
+  .channel-budget-label { font-size: 11px; color: var(--gray); }
+
+  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+  .demo-card { background: white; border-radius: 10px; border: 1px solid var(--border); padding: 18px; }
+  .demo-title { font-weight: 700; font-size: 13px; margin-bottom: 12px; color: var(--purple); }
+  .demo-row { display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px solid var(--border); font-size: 12px; }
+  .demo-row:last-child { border-bottom: none; }
+  .demo-row-label { color: var(--gray); }
+  .demo-row-val { font-weight: 600; }
+
+  .budget-total { background: var(--purple); }
+  .budget-total td { color: white !important; font-weight: 700; }
+
+  .new-badge { background: #DBEAFE; color: #1E40AF; font-size: 10px; font-weight: 700; padding: 1px 6px; border-radius: 4px; margin-left: 6px; }
+
+  @media (max-width: 768px) {
+    .content { padding: 16px; }
+    .header { padding: 20px; flex-direction: column; gap: 12px; }
+    .two-col { grid-template-columns: 1fr; }
+    .kpi-grid { grid-template-columns: repeat(2, 1fr); }
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div>
+    <h1>EVENTORI — Reporting Paid Ads v11</h1>
+    <p>LinkedIn · Google Ads · Meta · Période : 7 → 21 juillet 2026 · vs 23 juin → 6 juillet 2026</p>
+  </div>
+  <div class="header-badge">v11</div>
+</div>
+
+<div class="nav">
+  <div class="nav-tab active" onclick="showTab('overview')">Vue globale</div>
+  <div class="nav-tab" onclick="showTab('linkedin')">LinkedIn Ads</div>
+  <div class="nav-tab" onclick="showTab('google')">Google Ads</div>
+  <div class="nav-tab" onclick="showTab('meta')">Meta Ads</div>
+  <div class="nav-tab" onclick="showTab('demo')">Démographiques</div>
+  <div class="nav-tab" onclick="showTab('recos')">🎯 Recommandations</div>
+</div>
+
+<!-- VUE GLOBALE -->
+<div id="tab-overview" class="tab-content active">
+<div class="content">
+  <div class="period-badge">📅 7 → 21 juillet 2026 · vs 23 juin → 6 juillet 2026</div>
+
+  <div class="section-block">
+    <div class="section-title">Budget consolidé multi-canal</div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Canal / Campagne</th><th>Budget/j</th><th>Dépensé</th><th>vs Préc.</th><th>Impressions</th><th>Clics</th><th>CTR</th><th>CPC</th><th>CPM</th><th>Conv.</th><th>Statut</th></tr></thead>
+        <tbody>
+          <tr><td class="td-name">LI — TOFU SI FR</td><td>18€</td><td>271€</td><td><span class="badge badge-orange">-48%</span></td><td>14 811</td><td>48</td><td>0,32%</td><td>5,65€</td><td>18,31€</td><td>—</td><td><span class="badge badge-orange">Volume ↓</span></td></tr>
+          <tr><td class="td-name">LI — TOFU Video FR <em>(pause)</em></td><td>0€</td><td>58€</td><td>—</td><td>1 433</td><td>2</td><td>0,14%</td><td>28,92€</td><td>40,36€</td><td>—</td><td><span class="badge badge-gray">En pause</span></td></tr>
+          <tr><td class="td-name">LI — UK TOFU SI</td><td>16€</td><td>243€</td><td><span class="badge badge-red">-48%</span></td><td>11 802</td><td>33</td><td>0,28%</td><td>7,37€</td><td>20,61€</td><td>—</td><td><span class="badge badge-orange">Volume ↓</span></td></tr>
+          <tr><td class="td-name">LI — DACH TOFU SI</td><td>20€</td><td>302€</td><td>—</td><td>4 270</td><td>18</td><td>0,42%</td><td>16,78€</td><td>70,73€</td><td>—</td><td><span class="badge badge-red">CPM élevé ⚠️</span></td></tr>
+          <tr><td class="td-name">LI — ES SI</td><td>12€</td><td>183€</td><td>—</td><td>12 612</td><td>94</td><td>0,75%</td><td>1,95€</td><td>14,52€</td><td>—</td><td><span class="badge badge-green">✅ Meilleur CTR</span></td></tr>
+          <tr><td class="td-name">LI — ES Video</td><td>15€</td><td>228€</td><td>—</td><td>46 621</td><td>74</td><td>0,16%</td><td>3,08€</td><td>4,90€</td><td>—</td><td><span class="badge badge-green">✅ CPM très bas</span></td></tr>
+          <tr><td class="td-name">LI — MOFU Lead Gen <em>(pause)</em></td><td>0€</td><td>38€</td><td><span class="badge badge-red">-86%</span></td><td>1 186</td><td>6</td><td>0,51%</td><td>6,29€</td><td>31,84€</td><td>0</td><td><span class="badge badge-gray">En pause</span></td></tr>
+          <tr><td class="td-name">LI — BOFU ABM FR</td><td>10€</td><td>150€</td><td><span class="badge badge-red">-49%</span></td><td>8 350</td><td>33</td><td>0,40%</td><td>4,55€</td><td>17,98€</td><td>0</td><td><span class="badge badge-orange">0 conv</span></td></tr>
+          <tr><td class="td-name">LI — BOFU Retargeting</td><td>12€</td><td>183€</td><td><span class="badge badge-red">+86%</span></td><td>663</td><td>3</td><td>0,45%</td><td>61,01€</td><td>276,07€</td><td>0</td><td><span class="badge badge-red">CPM 276€ ⚠️</span></td></tr>
+          <tr><td class="td-name">GA — Competitors FR</td><td>~5€</td><td>71€</td><td><span class="badge badge-green">+38%</span></td><td>885</td><td>65</td><td>7,34%</td><td>1,10€</td><td>—</td><td>0</td><td><span class="badge badge-orange">0 conv ce cycle</span></td></tr>
+          <tr><td class="td-name">GA — Branding FR</td><td>~6€</td><td>87€</td><td><span class="badge badge-green">+27%</span></td><td>116</td><td>60</td><td>51,72%</td><td>1,44€</td><td>—</td><td>0</td><td><span class="badge badge-green">CTR 52% ✅</span></td></tr>
+          <tr><td class="td-name">GA — Acq. Billetterie FR</td><td>~20€</td><td>301€</td><td><span class="badge badge-orange">+23%</span></td><td>1 489</td><td>95</td><td>6,38%</td><td>3,16€</td><td>—</td><td>1</td><td><span class="badge badge-red">CPA 301€ ⚠️</span></td></tr>
+          <tr><td class="td-name">GA — Acq. Analytics FR <em>(veille)</em></td><td>~14€</td><td>215€</td><td><span class="badge badge-green">-11%</span></td><td>1 988</td><td>80</td><td>4,02%</td><td>2,69€</td><td>—</td><td>0</td><td><span class="badge badge-gray">Mise en veille</span></td></tr>
+          <tr><td class="td-name">GA — Acq. Ticketing UK <span class="new-badge">NEW</span></td><td>15€</td><td>0€</td><td>—</td><td>0</td><td>0</td><td>—</td><td>—</td><td>—</td><td>0</td><td><span class="badge badge-red">Pas de diffusion ⚠️</span></td></tr>
+          <tr><td class="td-name">GA — Acq. Analytics UK <span class="new-badge">NEW</span></td><td>15€</td><td>0€</td><td>—</td><td>0</td><td>0</td><td>—</td><td>—</td><td>—</td><td>0</td><td><span class="badge badge-red">Pas de diffusion ⚠️</span></td></tr>
+          <tr><td class="td-name">Meta — ACQ Broad</td><td>25€</td><td>—</td><td><span class="badge badge-gray">Export manquant</span></td><td>—</td><td>—</td><td>—</td><td>—</td><td>—</td><td>—</td><td><span class="badge badge-green">✅ Actif (Intérêts en pause)</span></td></tr>
+          <tr><td class="td-name">Meta — Retargeting</td><td>8€</td><td>130€</td><td><span class="badge badge-red">-64%</span></td><td>15 611</td><td>84</td><td>0,54%</td><td>1,54€</td><td>8,30€</td><td>1</td><td><span class="badge badge-orange">ACQ coupée = retarg. isolée</span></td></tr>
+          <tr class="budget-total"><td>TOTAL</td><td>~195€/j</td><td>~2 664€</td><td></td><td>~120 000</td><td>~698</td><td></td><td></td><td></td><td>1</td><td></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="section-block">
+    <div class="section-title">Alertes critiques de la période</div>
+
+    <div class="alert-box red">
+      <div class="alert-icon">🚨</div>
+      <div>
+        <div class="alert-title">Campagnes Google UK — 0 impression depuis le lancement</div>
+        <div class="alert-text">Les deux campagnes "Acquisition - Ticketing - UK" et "Acquisition - Analytics - UK" n'ont généré aucune impression ni dépense depuis leur lancement. Cause probable : les mots-clés en expression exacte sur un marché nouveau sans historique de qualité font que Google ne trouve pas de fenêtres d'enchères gagnables. Action immédiate : vérifier le Quality Score des mots-clés et le statut des annonces dans l'interface. Si les annonces sont approuvées, passer quelques mots-clés en requête large modifiée temporairement pour amorcer la diffusion.</div>
+      </div>
+    </div>
+
+    <div class="alert-box blue">
+      <div class="alert-icon">ℹ️</div>
+      <div>
+        <div class="alert-title">Meta ACQ — Ensemble Intérêts mis en pause volontairement ✅</div>
+        <div class="alert-text">L'ensemble "Intérêts | Club-Event" a été mis en pause suite aux recommandations v10 (CPC 1,39€ vs 0,51€ pour le Broad). Le Broad continue de tourner normalement. La baisse du retargeting (-64%) est liée à l'épuisement progressif de l'audience visiteurs site — pas à une coupure de l'ACQ.</div>
+      </div>
+    </div>
+
+    <div class="alert-box red">
+      <div class="alert-icon">🚨</div>
+      <div>
+        <div class="alert-title">BOFU Retargeting LinkedIn — CPM 276€ toujours actif</div>
+        <div class="alert-text">Malgré le signalement en v10, le CPM du BOFU Retargeting est passé de 135€ à 276€ — il a doublé. La campagne a dépensé 183€ pour seulement 663 impressions et 3 clics. L'objectif "Conversions de sites web" sur une audience de ~68% de pénétration avec 0 données de conversion est la cause. Cette campagne doit être modifiée cette semaine sans exception.</div>
+      </div>
+    </div>
+
+    <div class="alert-box orange">
+      <div class="alert-icon">⚠️</div>
+      <div>
+        <div class="alert-title">Google Billetterie FR — CPA remonté à 301€ (vs 118€ en v10)</div>
+        <div class="alert-text">1 seule conversion sur la période pour 301€ dépensés. La campagne régresse après une bonne période en v10. À surveiller sur le prochain cycle avant d'agir — une seule conversion sur 15 jours peut être du bruit statistique. Si ça se confirme en v12, il faudra investiguer les mots-clés et les annonces.</div>
+      </div>
+    </div>
+
+    <div class="alert-box green">
+      <div class="alert-icon">✅</div>
+      <div>
+        <div class="alert-title">ES LinkedIn — Meilleure campagne de la période</div>
+        <div class="alert-text">ES Single Image : CTR 0,75% et CPC 1,95€ — les meilleures métriques de tout le compte LinkedIn. ES Video : CPM 4,90€ et pénétration audience 115,6% (dépasse l'audience cible, bon signe de viralité organique). Real Federación Española de Patinaje génère 14 clics — l'équipe Business France a bien identifié cette cible. Le marché ES montre des signaux positifs précoces.</div>
+      </div>
+    </div>
+
+    <div class="alert-box orange">
+      <div class="alert-icon">⚠️</div>
+      <div>
+        <div class="alert-title">DACH LinkedIn — CPM 70,73€, performance limitée</div>
+        <div class="alert-text">28 clics pour 302€ dépensés (CPC 16,78€) — c'est 3× le CPC des autres marchés. Le CPM élevé à 70,73€ indique une audience très concurrentielle ou trop restreinte. Avec seulement 4 270 impressions sur 15 jours, l'audience DACH est trop petite pour une diffusion efficace à ce budget. À surveiller encore 2 semaines avant de décider de l'élargir ou de réduire le budget.</div>
+      </div>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- LINKEDIN -->
+<div id="tab-linkedin" class="tab-content">
+<div class="content">
+
+  <div class="channel-header">
+    <div class="channel-icon li">💼</div>
+    <div>
+      <div class="channel-name">LinkedIn Ads</div>
+      <div class="channel-sub">9 groupes de pub · FR + UK + DACH + ES · 7→21 juillet</div>
+    </div>
+    <div class="channel-budget">
+      <div class="channel-budget-val">1 657€</div>
+      <div class="channel-budget-label">dépensés sur la période</div>
+    </div>
+  </div>
+
+  <div class="section-block">
+    <div class="section-title">TOFU — Awareness</div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Campagne</th><th>Dépensé</th><th>vs Préc.</th><th>Impressions</th><th>Clics</th><th>CTR</th><th>CPC</th><th>CPM</th><th>Pénétration</th><th>Analyse</th></tr></thead>
+        <tbody>
+          <tr>
+            <td class="td-name">FR | Single Image</td><td>271€</td>
+            <td><span class="badge badge-orange">-48%</span></td>
+            <td>14 811</td><td>48</td><td>0,32%</td><td>5,65€</td><td>18,31€</td><td>39,3%</td>
+            <td><span class="badge badge-orange">Volume en baisse</span></td>
+          </tr>
+          <tr>
+            <td class="td-name">FR | Video Views <em>(pause)</em></td><td>58€</td>
+            <td>—</td>
+            <td>1 433</td><td>2</td><td>0,14%</td><td>28,92€</td><td>40,36€</td><td>29,8%</td>
+            <td><span class="badge badge-gray">Pause maintenue</span></td>
+          </tr>
+          <tr>
+            <td class="td-name">UK | Single Image</td><td>243€</td>
+            <td><span class="badge badge-red">-48%</span></td>
+            <td>11 802</td><td>33</td><td>0,28%</td><td>7,37€</td><td>20,61€</td><td>22,2%</td>
+            <td><span class="badge badge-orange">Volume en baisse</span></td>
+          </tr>
+          <tr>
+            <td class="td-name">DACH | Single Image</td><td>302€</td>
+            <td>—</td>
+            <td>4 270</td><td>18</td><td>0,42%</td><td>16,78€</td><td>70,73€</td><td>29,5%</td>
+            <td><span class="badge badge-red">CPM très élevé ⚠️</span></td>
+          </tr>
+          <tr>
+            <td class="td-name">ES | Single Image</td><td>183€</td>
+            <td>—</td>
+            <td>12 612</td><td>94</td><td>0,75%</td><td>1,95€</td><td>14,52€</td><td>35,8%</td>
+            <td><span class="badge badge-green">✅ Top performance</span></td>
+          </tr>
+          <tr>
+            <td class="td-name">ES | Video Views</td><td>228€</td>
+            <td>—</td>
+            <td>46 621</td><td>74</td><td>0,16%</td><td>3,08€</td><td>4,90€</td><td>115,6%</td>
+            <td><span class="badge badge-green">✅ CPM excellent</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="section-block">
+    <div class="section-title">MOFU + BOFU</div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Campagne</th><th>Dépensé</th><th>vs Préc.</th><th>Impressions</th><th>Clics</th><th>CTR</th><th>CPC</th><th>CPM</th><th>Leads</th><th>Pénétration</th></tr></thead>
+        <tbody>
+          <tr>
+            <td class="td-name">MOFU Lead Gen <em>(pause)</em></td><td>38€</td>
+            <td><span class="badge badge-red">-86%</span></td>
+            <td>1 186</td><td>6</td><td>0,51%</td><td>6,29€</td><td>31,84€</td><td>0</td><td>88,4%</td>
+          </tr>
+          <tr>
+            <td class="td-name">BOFU ABM FR</td><td>150€</td>
+            <td><span class="badge badge-red">-49%</span></td>
+            <td>8 350</td><td>33</td><td>0,40%</td><td>4,55€</td><td>17,98€</td><td>0</td><td>42,6%</td>
+          </tr>
+          <tr>
+            <td class="td-name">BOFU Retargeting</td><td>183€</td>
+            <td><span class="badge badge-red">+86% dépenses</span></td>
+            <td>663</td><td>3</td><td>0,45%</td><td>61,01€</td><td><strong style="color:var(--red)">276,07€</strong></td><td>0</td><td>68,1%</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="alert-box red">
+      <div class="alert-icon">🚨</div>
+      <div>
+        <div class="alert-title">BOFU Retargeting — CPM 276€, situation critique non résolue</div>
+        <div class="alert-text">En v10 on avait identifié ce problème (CPM 135€). Il a doublé à 276€ cette période. L'objectif "Conversions de sites web" doit être changé en "Visites du site web" immédiatement. La campagne a dépensé 183€ pour 3 clics — c'est 61€ par clic. Inacceptable.</div>
+      </div>
+    </div>
+  </div>
+
+</div>
+</div>
+
+<!-- GOOGLE ADS -->
+<div id="tab-google" class="tab-content">
+<div class="content">
+
+  <div class="channel-header">
+    <div class="channel-icon ga">🔍</div>
+    <div>
+      <div class="channel-name">Google Ads — Search</div>
+      <div class="channel-sub">6 campagnes · FR + UK (nouveau) · 7→21 juillet</div>
+    </div>
+    <div class="channel-budget">
+      <div class="channel-budget-val">674€</div>
+      <div class="channel-budget-label">dépensés · 1 conversion</div>
+    </div>
+  </div>
+
+  <div class="section-block">
+    <div class="section-title">Performance par campagne</div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Campagne</th><th>Coût</th><th>vs Préc.</th><th>Clics</th><th>vs Préc.</th><th>Impr.</th><th>CTR</th><th>CPC</th><th>Conv.</th><th>CPA</th><th>Statut</th></tr></thead>
+        <tbody>
+          <tr>
+            <td class="td-name">Competitors FR</td><td>71€</td>
+            <td><span class="badge badge-green">+38%</span></td>
+            <td>65</td><td><span class="badge badge-green">+51%</span></td>
+            <td>885</td><td>7,34%</td><td>1,10€</td><td>0</td><td>—</td>
+            <td><span class="badge badge-orange">0 conv ce cycle</span></td>
+          </tr>
+          <tr>
+            <td class="td-name">Branding EVENTORI FR</td><td>87€</td>
+            <td><span class="badge badge-green">+27%</span></td>
+            <td>60</td><td><span class="badge badge-red">-20%</span></td>
+            <td>116</td><td>51,72%</td><td>1,44€</td><td>0</td><td>—</td>
+            <td><span class="badge badge-green">CTR 52% ✅</span></td>
+          </tr>
+          <tr>
+            <td class="td-name">Acq. Billetterie FR</td><td>301€</td>
+            <td><span class="badge badge-orange">+23%</span></td>
+            <td>95</td><td><span class="badge badge-green">+16%</span></td>
+            <td>1 489</td><td>6,38%</td><td>3,16€</td><td>1</td><td>301€</td>
+            <td><span class="badge badge-red">CPA 301€ ⚠️</span></td>
+          </tr>
+          <tr>
+            <td class="td-name">Acq. Analytics FR <em>(veille)</em></td><td>215€</td>
+            <td><span class="badge badge-green">-11%</span></td>
+            <td>80</td><td><span class="badge badge-red">-1%</span></td>
+            <td>1 988</td><td>4,02%</td><td>2,69€</td><td>0</td><td>—</td>
+            <td><span class="badge badge-gray">Mise en veille</span></td>
+          </tr>
+          <tr>
+            <td class="td-name">Acq. Ticketing UK <span class="new-badge">NEW</span></td><td>0€</td>
+            <td>—</td>
+            <td>0</td><td>—</td>
+            <td>0</td><td>—</td><td>—</td><td>0</td><td>—</td>
+            <td><span class="badge badge-red">Ne diffuse pas ⚠️</span></td>
+          </tr>
+          <tr>
+            <td class="td-name">Acq. Analytics UK <span class="new-badge">NEW</span></td><td>0€</td>
+            <td>—</td>
+            <td>0</td><td>—</td>
+            <td>0</td><td>—</td><td>—</td><td>0</td><td>—</td>
+            <td><span class="badge badge-red">Ne diffuse pas ⚠️</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="alert-box red">
+      <div class="alert-icon">🚨</div>
+      <div>
+        <div class="alert-title">Campagnes UK — 0 impression depuis le lancement</div>
+        <div class="alert-text">Les deux campagnes UK lancées le 20-21 juillet n'ont pas encore diffusé. Causes possibles : annonces en cours d'examen, Quality Score insuffisant sur des mots-clés en expression exacte dans un nouveau compte sans historique UK, ou enchères trop basses vs la concurrence UK. Action : vérifier le statut des annonces (approuvées ?) et des mots-clés (Quality Score visible ?). Si annonces approuvées et QS faibles, tester 2-3 mots-clés en requête large pour amorcer.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="section-block">
+    <div class="section-title">Top mots-clés FR — Période</div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Mot clé</th><th>Campagne</th><th>Clics</th><th>Impr.</th><th>CTR</th><th>CPC</th><th>Coût</th><th>Conv.</th></tr></thead>
+        <tbody>
+          <tr><td class="td-name">[eventori billetterie]</td><td>Branding</td><td>5</td><td>8</td><td>62,5%</td><td>3,06€</td><td>15€</td><td>0</td></tr>
+          <tr><td class="td-name">"weezevent"</td><td>Competitors</td><td>~40</td><td>~600</td><td>~7%</td><td>~1,10€</td><td>~44€</td><td>0</td></tr>
+          <tr><td class="td-name">Logiciel billetterie (groupe)</td><td>Billetterie</td><td>95</td><td>1 489</td><td>6,38%</td><td>3,16€</td><td>301€</td><td>1</td></tr>
+          <tr><td class="td-name">Dynamic Pricing UK (groupe)</td><td>Analytics UK</td><td>0</td><td>0</td><td>—</td><td>—</td><td>0€</td><td>0</td></tr>
+          <tr><td class="td-name">Ticketing Software UK (groupe)</td><td>Ticketing UK</td><td>0</td><td>0</td><td>—</td><td>—</td><td>0€</td><td>0</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+</div>
+
+<!-- META -->
+<div id="tab-meta" class="tab-content">
+<div class="content">
+
+  <div class="channel-header">
+    <div class="channel-icon meta">📱</div>
+    <div>
+      <div class="channel-name">Meta Ads</div>
+      <div class="channel-sub">2 campagnes · FR · 7→21 juillet</div>
+    </div>
+    <div class="channel-budget">
+      <div class="channel-budget-val">130€</div>
+      <div class="channel-budget-label">dépensés (vs 346€ période préc.)</div>
+    </div>
+  </div>
+
+  <div class="alert-box blue">
+    <div class="alert-icon">ℹ️</div>
+    <div>
+      <div class="alert-title">ACQ — Ensemble Intérêts mis en pause volontairement ✅</div>
+      <div class="alert-text">L'ensemble "FR | ACQ | Intérêts | Club-Event" a été mis en pause intentionnellement suite aux recommandations v10 — il performait 3× moins bien que le Broad (CPC 1,39€ vs 0,51€). L'ensemble Broad continue de tourner normalement. Les données à 0 sur la campagne ACQ dans l'export de cette période semblent liées à un problème de fichier. Le pipeline Meta reste actif.</div>
+    </div>
+  </div>
+
+  <div class="section-block">
+    <div class="section-title">Performance des campagnes</div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Campagne</th><th>Dépensé</th><th>vs Préc.</th><th>Impressions</th><th>Couverture</th><th>Clics</th><th>CTR</th><th>CPC</th><th>CPM</th><th>Résultats</th></tr></thead>
+        <tbody>
+          <tr>
+            <td class="td-name">FR | ACQ | Intérêts + Broad</td><td>0€</td>
+            <td><span class="badge badge-red">-100%</span></td>
+            <td>0</td><td>—</td><td>0</td><td>—</td><td>—</td><td>—</td>
+            <td><span class="badge badge-red">Arrêtée ⚠️</span></td>
+          </tr>
+          <tr>
+            <td class="td-name">FR | Retargeting | Juillet 2026</td><td>130€</td>
+            <td><span class="badge badge-red">-64%</span></td>
+            <td>15 611</td><td>951</td><td>84</td><td>0,54%</td><td>1,54€</td><td>8,30€</td>
+            <td>1 lead pixel</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="alert-box orange">
+      <div class="alert-icon">⚠️</div>
+      <div>
+        <div class="alert-title">Retargeting — Performance dégradée sans ACQ pour l'alimenter</div>
+        <div class="alert-text">Le retargeting a chuté de -64% en dépenses et -84% en clics par rapport à la période précédente. Avec l'ACQ coupée, l'audience retargeting "Visiteurs site 180j" ne se renouvelle plus. CPM stable à 8,30€ (bon signe), mais le volume d'audience disponible diminue chaque jour. 1 lead pixel généré — à vérifier s'il correspond à une vraie demande de démo dans HubSpot.</div>
+      </div>
+    </div>
+  </div>
+
+</div>
+</div>
+
+<!-- DÉMOGRAPHIQUES -->
+<div id="tab-demo" class="tab-content">
+<div class="content">
+
+  <div class="section-block">
+    <div class="section-title">LinkedIn — Top entreprises par campagne (7→21 juillet)</div>
+    <div class="two-col">
+      <div class="demo-card">
+        <div class="demo-title">TOFU SI FR — Top entreprises</div>
+        <div class="demo-row"><span class="demo-row-label">UEFA</span><span class="demo-row-val">134 impr (0,91%)</span></div>
+        <div class="demo-row"><span class="demo-row-label">SporTech Fr</span><span class="demo-row-val">89 impr (0,60%)</span></div>
+        <div class="demo-row"><span class="demo-row-label">Plenitude Arena</span><span class="demo-row-val">86 impr (0,58%)</span></div>
+        <div class="demo-row" style="margin-top:8px;font-style:italic;font-size:11px;color:var(--gray);">⚠️ Plenitude Arena = salle concert/événementiel, pas sport — à exclure</div>
+      </div>
+      <div class="demo-card">
+        <div class="demo-title">UK TOFU SI — Top entreprises</div>
+        <div class="demo-row"><span class="demo-row-label">Aston Villa FC</span><span class="demo-row-val">88 impr (0,75%)</span></div>
+        <div class="demo-row"><span class="demo-row-label">AFC Wimbledon</span><span class="demo-row-val">70 impr (0,59%)</span></div>
+        <div class="demo-row" style="margin-top:8px;font-style:italic;font-size:11px;color:var(--green);">✅ Clubs EFL bien ciblés</div>
+      </div>
+      <div class="demo-card">
+        <div class="demo-title">BOFU ABM FR — Top entreprises</div>
+        <div class="demo-row"><span class="demo-row-label">Olympique Lyonnais</span><span class="demo-row-val">334 impr (4,0%) — actif</span></div>
+        <div class="demo-row"><span class="demo-row-label">AS Monaco</span><span class="demo-row-val">256 impr (3,1%)</span></div>
+        <div class="demo-row"><span class="demo-row-label">LOSC</span><span class="demo-row-val">204 impr (2,4%)</span></div>
+        <div class="demo-row" style="margin-top:8px;font-style:italic;font-size:11px;color:var(--green);">✅ Grands clubs Ligue 1 bien représentés</div>
+      </div>
+      <div class="demo-card">
+        <div class="demo-title">DACH TOFU — Top entreprises</div>
+        <div class="demo-row"><span class="demo-row-label">FIFA</span><span class="demo-row-val">55 impr (1,29%)</span></div>
+        <div class="demo-row"><span class="demo-row-label">Infront Sports & Media</span><span class="demo-row-val">48 impr (1,12%)</span></div>
+        <div class="demo-row"><span class="demo-row-label">TEAM Marketing AG</span><span class="demo-row-val">40 impr (0,94%)</span></div>
+        <div class="demo-row" style="margin-top:8px;font-style:italic;font-size:11px;color:var(--orange);">⚠️ FIFA/Infront = agences sport internationales, pas clubs — ICP flou</div>
+      </div>
+      <div class="demo-card">
+        <div class="demo-title">ES — Top entreprises</div>
+        <div class="demo-row"><span class="demo-row-label">G18 Agencia</span><span class="demo-row-val">2 255 impr — 15 clics ✅</span></div>
+        <div class="demo-row"><span class="demo-row-label">Real Federación Española de Patinaje</span><span class="demo-row-val">2 255 impr — 14 clics ✅</span></div>
+        <div class="demo-row"><span class="demo-row-label">Logista</span><span class="demo-row-val">437 impr — 3 clics</span></div>
+        <div class="demo-row" style="margin-top:8px;font-style:italic;font-size:11px;color:var(--green);">✅ Forte interaction — à suivre pour approche commerciale</div>
+      </div>
+      <div class="demo-card">
+        <div class="demo-title">BOFU Retargeting — Top entreprises</div>
+        <div class="demo-row"><span class="demo-row-label">LOSC</span><span class="demo-row-val">20 impr (3,0%)</span></div>
+        <div class="demo-row"><span class="demo-row-label">Stade Français Paris</span><span class="demo-row-val">18 impr (2,7%)</span></div>
+        <div class="demo-row"><span class="demo-row-label">Toulouse Basketball Club</span><span class="demo-row-val">13 impr (2,0%)</span></div>
+        <div class="demo-row" style="margin-top:8px;font-style:italic;font-size:11px;color:var(--red);">⚠️ Seulement 663 impressions totales — audience épuisée</div>
+      </div>
+      <div class="demo-card">
+        <div class="demo-title">MOFU Lead Gen — Top entreprises</div>
+        <div class="demo-row"><span class="demo-row-label">Ligue Nationale de Rugby</span><span class="demo-row-val">12 impr (1,0%)</span></div>
+        <div class="demo-row"><span class="demo-row-label">Infront Sports & Media</span><span class="demo-row-val">11 impr (0,93%)</span></div>
+        <div class="demo-row"><span class="demo-row-label">LNH Handball</span><span class="demo-row-val">11 impr (0,93%)</span></div>
+        <div class="demo-row" style="margin-top:8px;font-style:italic;font-size:11px;color:var(--gray);">Campagne en pause — très peu de données</div>
+      </div>
+    </div>
+  </div>
+
+</div>
+</div>
+
+<!-- RECOMMANDATIONS -->
+<div id="tab-recos" class="tab-content">
+<div class="content">
+
+  <div class="section-block">
+    <div class="section-title">Actions prioritaires — Semaine du 22 juillet</div>
+    <div class="reco-grid">
+
+      <div class="reco-card">
+        <div class="reco-header">
+          <div class="reco-prio prio-1">1</div>
+          <div class="reco-title">Changer l'objectif BOFU Retargeting LinkedIn</div>
+        </div>
+        <div class="reco-channel">🔴 URGENT aujourd'hui · LinkedIn · CPM 276€</div>
+        <div class="reco-action">C'est la 3e fois qu'on signale ce problème. Modifier l'ensemble de pub → changer l'objectif de "Conversions de sites web" à "Visites du site web". <strong>10 minutes de travail</strong> qui vont diviser le CPM par 5-10 immédiatement.</div>
+      </div>
+
+      <div class="reco-card">
+        <div class="reco-header">
+          <div class="reco-prio prio-1">2</div>
+          <div class="reco-title">Débloquer les campagnes Google UK</div>
+        </div>
+        <div class="reco-channel">🔴 URGENT · Google Ads · 0 diffusion depuis le lancement</div>
+        <div class="reco-action">Vérifier dans Google Ads : (1) statut des annonces — approuvées ou en examen ? (2) Quality Score des mots-clés — afficher la colonne QS. Si QS &lt; 5 et annonces approuvées, passer 3-4 mots-clés clés en requête large ("ticketing software", "dynamic pricing software") pour amorcer la diffusion. Revenir en expression exacte après 2 semaines.</div>
+      </div>
+
+      <div class="reco-card">
+        <div class="reco-header">
+          <div class="reco-prio prio-2">3</div>
+          <div class="reco-title">Surveiller Google Billetterie FR — CPA 301€</div>
+        </div>
+        <div class="reco-channel">🟡 À surveiller · Google Ads</div>
+        <div class="reco-action">1 conversion à 301€ sur 15 jours — peut être du bruit statistique après une bonne période en v10 (4 conv à 118€). Ne pas agir encore. Si v12 confirme &lt; 2 conversions, investiguer les mots-clés et ajuster les enchères sur "weezevent" qui avait le meilleur CPA historique.</div>
+      </div>
+
+      <div class="reco-card">
+        <div class="reco-header">
+          <div class="reco-prio prio-2">4</div>
+          <div class="reco-title">Surveiller Google Billetterie FR — CPA 301€</div>
+        </div>
+        <div class="reco-channel">🟡 À surveiller · Google Ads</div>
+        <div class="reco-action">1 conversion à 301€ sur 15 jours — c'est peut-être du bruit statistique après une bonne période en v10 (4 conv à 118€). Ne pas agir encore. Si v12 confirme < 2 conversions, investiguer les mots-clés et ajuster les enchères sur "weezevent" qui avait le meilleur CPA.</div>
+      </div>
+
+      <div class="reco-card">
+        <div class="reco-header">
+          <div class="reco-prio prio-2">5</div>
+          <div class="reco-title">Réévaluer la campagne DACH LinkedIn</div>
+        </div>
+        <div class="reco-channel">🟡 Dans 2 semaines · LinkedIn DACH</div>
+        <div class="reco-action">CPM 70,73€ et CPC 16,78€ — 3× plus cher que les autres marchés. Audience trop petite ou trop concurrentielle. Deux options : élargir le ciblage (retirer des filtres de postes) pour faire baisser le CPM, ou réduire le budget à 10€/j et attendre que l'algorithme optimise. FIFA et Infront (agences internationales) dans le top démo suggère un ciblage trop large hors ICP clubs.</div>
+      </div>
+
+      <div class="reco-card">
+        <div class="reco-header">
+          <div class="reco-prio prio-2">6</div>
+          <div class="reco-title">Activer outreach commercial sur Real Federación ES</div>
+        </div>
+        <div class="reco-channel">🟡 Cette semaine · Commercial · Signal fort ES</div>
+        <div class="reco-action">La Real Federación Española de Patinaje génère 14 clics sur les pubs ES — c'est le meilleur signal d'intention de toute la période. Business France (Laura/Léa) a déjà identifié cette cible. Passer le relais à Baptiste pour un outreach Lemlist ou LinkedIn direct sur les contacts de cette fédération. Le timing est parfait — ils ont vu les pubs.</div>
+      </div>
+
+      <div class="reco-card">
+        <div class="reco-header">
+          <div class="reco-prio prio-3">7</div>
+          <div class="reco-title">Exclure Plenitude Arena du TOFU FR</div>
+        </div>
+        <div class="reco-channel">🟢 Rapide · LinkedIn TOFU FR</div>
+        <div class="reco-action">Plenitude Arena apparaît dans les top impressions TOFU FR — c'est une salle de spectacles/concerts, pas un club sportif. Ajouter en exclusion d'entreprise dans l'audience enregistrée FR. 2 minutes de travail.</div>
+      </div>
+
+      <div class="reco-card">
+        <div class="reco-header">
+          <div class="reco-prio prio-3">8</div>
+          <div class="reco-title">Préparer nouvelles créas MOFU pour relance</div>
+        </div>
+        <div class="reco-channel">🟢 Août · LinkedIn MOFU</div>
+        <div class="reco-action">La pause MOFU est maintenue. Préparer les 2 nouveaux document ads : Dragons de Rouen (palmarès hockey + nouveau client) et Nanterre 92 (+35% CA, citation Pierre Gueny). Objectif relance : semaine du 4 août. Sans nouvelles créas il n'y a aucun intérêt à relancer — les anciennes ont 88% de pénétration d'audience.</div>
+      </div>
+
+    </div>
+  </div>
+
+  <div class="section-block">
+    <div class="section-title">Budget recommandé — Fin juillet / Août 2026</div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Canal / Campagne</th><th>Budget actuel</th><th>Budget recommandé</th><th>Action / Justification</th></tr></thead>
+        <tbody>
+          <tr><td class="td-name">LI — TOFU SI FR</td><td>18€/j</td><td>18€/j ✅</td><td>Maintenir</td></tr>
+          <tr><td class="td-name">LI — Video Views FR</td><td>0€ (pause)</td><td>0€ ✅</td><td>Pause maintenue</td></tr>
+          <tr><td class="td-name">LI — UK TOFU SI</td><td>16€/j</td><td>16€/j ✅</td><td>Maintenir</td></tr>
+          <tr><td class="td-name">LI — DACH TOFU SI</td><td>20€/j</td><td><strong>12€/j ↓</strong></td><td>CPM trop élevé, réduire et élargir le ciblage</td></tr>
+          <tr><td class="td-name">LI — ES SI</td><td>12€/j</td><td><strong>15€/j ↑</strong></td><td>Meilleur CTR du compte — augmenter</td></tr>
+          <tr><td class="td-name">LI — ES Video</td><td>15€/j</td><td>15€/j ✅</td><td>Excellent CPM, maintenir</td></tr>
+          <tr><td class="td-name">LI — MOFU Lead Gen</td><td>0€ (pause)</td><td>0€ jusqu'au 4 août</td><td>Attendre nouvelles créas</td></tr>
+          <tr><td class="td-name">LI — BOFU ABM FR</td><td>10€/j</td><td>10€/j ✅</td><td>Maintenir</td></tr>
+          <tr><td class="td-name">LI — BOFU Retargeting</td><td>12€/j</td><td>12€/j (changer obj.)</td><td>🔴 Changer objectif en Trafic d'abord</td></tr>
+          <tr><td class="td-name">GA — Competitors FR</td><td>~5€/j</td><td>5€/j ✅</td><td>Maintenir</td></tr>
+          <tr><td class="td-name">GA — Branding FR</td><td>~6€/j</td><td>6€/j ✅</td><td>CTR 52%, maintenir</td></tr>
+          <tr><td class="td-name">GA — Acq. Billetterie FR</td><td>~20€/j</td><td>20€/j ✅</td><td>Surveiller v12 avant d'agir</td></tr>
+          <tr><td class="td-name">GA — Acq. Analytics FR</td><td>~14€/j</td><td>14€/j (veille)</td><td>Maintenir en veille</td></tr>
+          <tr><td class="td-name">GA — Ticketing UK</td><td>15€/j</td><td>15€/j 🔴</td><td>Débloquer la diffusion d'abord</td></tr>
+          <tr><td class="td-name">GA — Analytics UK</td><td>15€/j</td><td>15€/j 🔴</td><td>Débloquer la diffusion d'abord</td></tr>
+          <tr><td class="td-name">Meta — ACQ Broad</td><td>25€/j</td><td>25€/j ✅</td><td>Actif — ensemble Intérêts en pause volontaire ✅</td></tr>
+          <tr><td class="td-name">Meta — Retargeting</td><td>8€/j</td><td>8€/j ✅</td><td>Maintenir, dépend du relancement ACQ</td></tr>
+          <tr class="budget-total"><td>TOTAL</td><td>~195€/j</td><td>~191€/j</td><td>Légère optimisation budgétaire</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+</div>
+
+<script>
+function showTab(id) {
+  document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('tab-' + id).classList.add('active');
+  event.target.classList.add('active');
+}
+</script>
+</body>
+</html>
